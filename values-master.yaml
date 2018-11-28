@@ -1,0 +1,30 @@
+global:
+  imageTag: master
+  proxy:
+    https:
+      host: s-msk-proxy-01.global.bcs
+      port: 8080
+    http:
+      host: s-msk-proxy-01.global.bcs
+      port: 8080
+    none:
+    - kubernetes.default.svc.cluster.local
+
+  agentppz:
+    image: registry.gitlab.bcs.ru/uk/agent-ppz
+    imagePullPolicy: Always
+    imagePullSecret: regsecret
+  ocr:
+    image: registry.gitlab.bcs.ru/uk/uk-ocr
+    imagePullPolicy: Always
+    imagePullSecret: regsecret
+
+  identification:
+    image: registry.gitlab.bcs.ru/uk/uk-identification
+    imagePullPolicy: Always
+    imagePullSecret: regsecret
+
+  integration:
+    image: registry.gitlab.bcs.ru/uk/uk-integration
+    imagePullPolicy: Always
+    imagePullSecret: regsecret

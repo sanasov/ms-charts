@@ -1,0 +1,297 @@
+image: registry.gitlab.bcs.ru/devops/images/docker/buildimage:master
+
+variables:
+  KUBECONFIG: /etc/deploy/config
+  NO_PROXY: kubernetes.default.svc.cluster.local,s-t-mic-kubeapi.t-global.bcs
+  HTTP_PROXY: http://s-proxy-04-g.global.bcs:8080
+  HTTPS_PROXY: http://s-proxy-04-g.global.bcs:8080
+
+stages:
+  - install
+  - list
+  - redeploy
+  - rollback
+  - delete
+
+installRelease:
+ stage: install
+  
+ before_script:
+  - mkdir -p /etc/deploy
+  - |      
+    case "$CI_COMMIT_REF_SLUG" in
+        test|test-*)
+            KUBE_CONFIG=${K8S_TEST}
+            CONTEXT=staging
+            CLUSTER=test
+            ;;
+        prod|prod-*)
+            KUBE_CONFIG=${K8S_PROD}
+            CONTEXT=staging
+            CLUSTER=prod
+            ;;
+        staging|staging-*)
+            KUBE_CONFIG=${K8S_STAGING}
+            CONTEXT=staging
+            CLUSTER=stage
+            ;;
+        *)
+            echo "ERROR: Branch or tag name should include environment name!" >&2
+            exit 1
+            ;;
+    esac
+  - echo ${KUBE_CONFIG} | base64 -d > ${KUBECONFIG}
+#  - kubectl config use-context $CONTEXT
+  - helm init --client-only
+  - kubectl version
+  - helm version
+  - CI_PROJECT_NAMESPACE="uk"
+  - echo $CI_PROJECT_NAMESPACE
+  - echo $CI_COMMIT_REF_SLUG
+  - echo $CLUSTER
+
+ script:
+  - helm list
+  - CHART_NAME="uk"
+  - mkdir -p repo
+  - helm serve repo &
+  - HELMPID=$!
+  - trap "rc=\$?; kill $HELMPID; echo Done with exit status \$rc; exit \$rc" EXIT
+  - sleep 1
+  - helm repo add local http://127.0.0.1:8879/charts/
+  - helm repo add commonRepo http://127.0.0.1:8879/charts/
+  - helm -d repo package "$CHART_PATH"
+  #- helm dep up "$CHART_PATH"
+  - package=$(find repo -name "$CHART_NAME"-\*.tgz)
+  - helm repo update
+  - opts=""
+  - values="values-$CLUSTER.yaml"
+  - if [ -f "$values" ]; then opts="$opts -f $values" ; fi
+  - if [ -f RELEASE ]; then release=$(head -1 RELEASE); fi
+  - if [ -z "$release" ]; then release="$CHART_NAME" ; fi
+  - echo $release
+  - helm_release=$(helm list --all --deployed -m 500 | awk '$1 == "'"$release"'" {print}')
+  - CI_PROJECT_NAMESPACE="uk"
+  - echo $opts
+  - echo $helm_release
+  - echo $package
+  - echo $CI_PROJECT_NAMESPACE
+  - echo $values
+  - if [ -z "$helm_release" ]; then helm install $opts --name $release --namespace $CI_PROJECT_NAMESPACE $package; else helm upgrade $opts $release $package; fi
+ only:
+  - test
+  - /^test-.*$/
+  - staging
+  - /^staging-.*$/
+  - prod
+  - /^prod-.*$/
+
+listRelease:
+ stage: list
+ 
+ before_script:
+  - mkdir -p /etc/deploy
+  - |      
+    case "$CI_COMMIT_REF_SLUG" in
+        master|test|test-*)
+            KUBE_CONFIG=${K8S_TEST}
+            CONTEXT=staging
+            ;;
+        prod|prod-*)
+            KUBE_CONFIG=${K8S_PROD}
+            CONTEXT=staging
+            ;;
+        staging|staging-*)
+            KUBE_CONFIG=${K8S_STAGING}
+            CONTEXT=staging
+            ;;
+        *)
+            echo "ERROR: Branch or tag name should include environment name!" >&2
+            exit 1
+            ;;
+    esac
+  - echo ${KUBE_CONFIG} | base64 -d > ${KUBECONFIG}
+#  - kubectl config use-context $CONTEXT
+  - helm init --client-only
+  - kubectl version
+  - helm version
+  - CI_PROJECT_NAMESPACE="uk"
+  - echo $CI_PROJECT_NAMESPACE
+  - echo $CI_COMMIT_REF_SLUG
+  - CHART_NAME="uk"
+  - if [ -f RELEASE ]; then release=$(head -1 RELEASE); fi
+  - if [ -z "$release" ]; then release="$CHART_NAME" ; fi
+  - helm_release=$(helm list --deployed -m 500 | awk '$1 == "'"$release"'" {print}')
+  
+ script:
+  - kubectl get all -n $CI_PROJECT_NAMESPACE
+  - kubectl describe all -n $CI_PROJECT_NAMESPACE
+  - kubectl get pvc -n $CI_PROJECT_NAMESPACE
+  - helm list
+  - helm status $release
+  - helm list $release
+  - helm history $helm_release
+  
+ when: manual
+ only: 
+  - test
+  - /^test-.*$/
+  - staging
+  - /^staging-.*$/
+  - prod
+  - /^prod-.*$/
+
+redeploy:
+ stage: redeploy
+
+ before_script:
+  - mkdir -p /etc/deploy
+  - |
+    case "$CI_COMMIT_REF_SLUG" in
+        master|test|test-*)
+            KUBE_CONFIG=${K8S_TEST}
+            CONTEXT=staging
+            ;;
+        prod|prod-*)
+            KUBE_CONFIG=${K8S_PROD}
+            CONTEXT=staging
+            ;;
+        staging|staging-*)
+            KUBE_CONFIG=${K8S_STAGING}
+            CONTEXT=staging
+            ;;
+        *)
+            echo "ERROR: Branch or tag name should include environment name!" >&2
+            exit 1
+            ;;
+    esac
+  - echo ${KUBE_CONFIG} | base64 -d > ${KUBECONFIG}
+  - helm init --client-only
+  - kubectl version
+  - helm version
+  - CI_PROJECT_NAMESPACE="uk"
+  - echo $CI_PROJECT_NAMESPACE
+  - echo $CI_COMMIT_REF_SLUG
+  - CHART_NAME="uk"
+  - if [ -f RELEASE ]; then release=$(head -1 RELEASE); fi
+  - if [ -z "$release" ]; then release="$CHART_NAME" ; fi
+  #- helm_release=$(helm ls | awk '$1 == "'"$release"'" {print}')
+
+ script:
+  - kubectl --namespace $CI_PROJECT_NAMESPACE delete --all pods
+  - kubectl --namespace $CI_PROJECT_NAMESPACE get pods
+
+ when: manual
+ only:
+  - test
+  - /^test-.*$/
+  - staging
+  - /^staging-.*$/
+  - prod
+  - /^prod-.*$/
+
+rollbackRelease:
+ stage: rollback
+  
+ before_script:
+  - mkdir -p /etc/deploy
+  - |      
+    case "$CI_COMMIT_REF_SLUG" in
+        master|test|test-*)
+            KUBE_CONFIG=${K8S_TEST}
+            CONTEXT=staging
+            ;;
+        prod|prod-*)
+            KUBE_CONFIG=${K8S_PROD}
+            CONTEXT=staging
+            ;;
+        staging|staging-*)
+            KUBE_CONFIG=${K8S_STAGING}
+            CONTEXT=staging
+            ;;
+        *)
+            echo "ERROR: Branch or tag name should include environment name!" >&2
+            exit 1
+            ;;
+    esac
+  - echo ${KUBE_CONFIG} | base64 -d > ${KUBECONFIG}
+#  - kubectl config use-context $CONTEXT
+  - helm init --client-only
+  - kubectl version
+  - helm version
+  - CI_PROJECT_NAMESPACE="uk"
+  - echo $CI_PROJECT_NAMESPACE
+  - echo $CI_COMMIT_REF_SLUG
+  - CHART_NAME="uk"
+  - if [ -f RELEASE ]; then release=$(head -1 RELEASE); fi
+  - if [ -z "$release" ]; then release="$CHART_NAME" ; fi
+  - helm_release=$(helm list --deployed -m 500| awk '$1 == "'"$release"'" {print}')
+  
+ script:
+  - helm history $helm_release
+  - last_release=$(helm history $helm_release | awk '{print $1}' | grep -v REV | sort -r | head -n1)
+  - before_last_release=$(expr $last_release - 1)
+  - echo ${before_last_release}
+  - echo ${helm_release}
+  - helm rollback --dry-run --force ${release} ${before_last_release}
+  - helm rollback --force ${helm_release} ${before_last_release}
+  - helm history $helm_release
+  
+ when: manual
+ only: 
+  - test
+  - /^test-.*$/
+  - staging
+  - /^staging-.*$/
+  - prod
+  - /^prod-.*$/
+
+DANGER-DELETE RELEASE:
+ stage: delete
+  
+ before_script:
+  - mkdir -p /etc/deploy
+  - |      
+    case "$CI_COMMIT_REF_SLUG" in
+        master|test|test-*)
+            KUBE_CONFIG=${K8S_TEST}
+            CONTEXT=staging
+            ;;
+        prod|prod-*)
+            KUBE_CONFIG=${K8S_PROD}
+            CONTEXT=staging
+            ;;
+        staging|staging-*)
+            KUBE_CONFIG=${K8S_STAGING}
+            CONTEXT=staging
+            ;;
+        *)
+            echo "ERROR: Branch or tag name should include environment name!" >&2
+            exit 1
+            ;;
+    esac
+  - echo ${KUBE_CONFIG} | base64 -d > ${KUBECONFIG}
+  - helm init --client-only
+  - kubectl version
+  - helm version
+  - CI_PROJECT_NAMESPACE="uk"
+  - echo $CI_PROJECT_NAMESPACE
+  - echo $CI_COMMIT_REF_SLUG
+  - CHART_PATH=$(dirname $(find . -mindepth 1 -maxdepth 1 -name Chart.yaml | head -1)) 
+  - CHART_NAME=$(basename "$CHART_PATH")
+  - if [ -f RELEASE ]; then release=$(head -1 RELEASE); fi
+  - if [ -z "$release" ]; then release="$CHART_NAME" ; fi
+  - helm_release=$(helm list --deployed -m 500 | awk '$1 == "'"$release"'" {print}')
+  
+ script:
+  - helm list $release
+  - helm delete --purge $release || true
+  
+ when: manual
+ only: 
+  - test
+  - /^test-.*$/
+  - staging
+  - /^staging-.*$/
+  - prod
+  - /^prod-.*$/

@@ -1,0 +1,4 @@
+dependencies:
+  - name: utils
+    repository: alias:commonRepo
+    version: 0.1.1
