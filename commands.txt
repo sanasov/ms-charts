@@ -1,0 +1,21 @@
+docker build . -t agent-ppz:latest
+eval $(minikube docker-env -u)
+eval $(minikube docker-env)
+
+helm del --purge uk
+helm upgrade --install --force --namespace uk uk uk-charts-0.1.1.tgz -f values-local.yaml
+helm install --namespace uk --name uk uk-charts-0.1.1.tgz -f values-local.yaml
+
+kubectl port-forward dict-agents-ppz-postgreagentsppz-5fcbf9fdc7-42b8k 5432:5432
+
+
+kubectl exec -it pod-name psql
+alias kcd='kubectl config set-context $(kubectl config current-context) --namespace '
+
+rm -rf uk-charts-0.1.1.tgz && helm package .
+3903064806
+
+
+docker run -d --hostname igrey-rabbit --name my-rabbit -p 15672:15672 -p 5672:5672 rabbitmq:3.7.8-management
+
+helm del --purge uk
