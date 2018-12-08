@@ -1,0 +1,20 @@
+{
+  "kind": "StorageClass",
+  "apiVersion": "storage.k8s.io/v1",
+  "metadata": {
+    "name": "default",
+    "selfLink": "/apis/storage.k8s.io/v1/storageclasses/default",
+    "uid": "4411cfac-e293-11e8-bb9f-080027fe42da",
+    "resourceVersion": "272837",
+    "creationTimestamp": "2018-11-07T13:44:36Z",
+    "labels": {
+      "addonmanager.kubernetes.io/mode": "Reconcile"
+    },
+    "annotations": {
+      "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"storage.k8s.io/v1\",\"kind\":\"StorageClass\",\"metadata\":{\"annotations\":{\"storageclass.beta.kubernetes.io/is-default-class\":\"true\"},\"creationTimestamp\":\"2018-02-01T04:35:11Z\",\"labels\":{\"addonmanager.kubernetes.io/mode\":\"Reconcile\"},\"name\":\"default\",\"namespace\":\"\",\"resourceVersion\":\"147\",\"selfLink\":\"/apis/storage.k8s.io/v1/storageclasses/default\",\"uid\":\"4a4156da-0709-11e8-ac6e-0800270add49\"},\"provisioner\":\"k8s.io/minikube-hostpath\",\"reclaimPolicy\":\"Delete\"}\n",
+      "storageclass.beta.kubernetes.io/is-default-class": "true"
+    }
+  },
+  "provisioner": "k8s.io/minikube-hostpath",
+  "reclaimPolicy": "Delete"
+}

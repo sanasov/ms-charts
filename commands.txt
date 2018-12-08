@@ -17,5 +17,6 @@ rm -rf uk-charts-0.1.1.tgz && helm package .
 
 
 docker run -d --hostname igrey-rabbit --name my-rabbit -p 15672:15672 -p 5672:5672 rabbitmq:3.7.8-management
+docker run -d --hostname ms-front-hostname --name ms-front-container ms-front
 
 helm del --purge /
