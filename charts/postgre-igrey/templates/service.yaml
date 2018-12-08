@@ -15,7 +15,7 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-  - name: postgreagentppz
+  - name: postgreigrey
     port: {{ .Values.service.port }}
     targetPort: postgresql
 {{- if .Values.service.externalIPs }}

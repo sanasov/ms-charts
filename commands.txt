@@ -7,7 +7,7 @@ helm upgrade --install --force --namespace uk uk uk-charts-0.1.1.tgz -f values-l
 helm install --namespace uk --name uk uk-charts-0.1.1.tgz -f values-local.yaml
 
 kubectl port-forward dict-agents-ppz-postgreagentsppz-5fcbf9fdc7-42b8k 5432:5432
-
+kubectl create -f kubia-manual.yaml
 
 kubectl exec -it pod-name psql
 alias kcd='kubectl config set-context $(kubectl config current-context) --namespace '

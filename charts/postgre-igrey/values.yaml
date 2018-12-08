@@ -43,7 +43,7 @@ persistence:
   ##   GKE, AWS & OpenStack)
   ##
   # storageClass: "-"
-  storageClass: "default"
+  storageClass: "hostpath"
   accessMode: ReadWriteOnce
   size: 512Mi
   subPath: "postgresql-db"

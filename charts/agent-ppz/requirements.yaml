@@ -1,7 +1,0 @@
-dependencies:
-  - name: utils
-    repository: alias:commonRepo
-    version: 0.1.1
-  - name: postgre-agent-ppz
-    repository: alias:local
-    version: 0.8.3
