@@ -10,18 +10,6 @@ global:
     none:
       - kubernetes.default.svc.cluster.local
 
-  agentppz:
-    image: agent-ppz
-    imagePullPolicy: Never
-
-  ocr:
-    image: ocr
-    imagePullPolicy: Never
-
-  identification:
-    image: identification
-    imagePullPolicy: Never
-
-  integration:
-    image: integration
+  msfront:
+    image: ms-front
     imagePullPolicy: Never

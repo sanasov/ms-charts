@@ -6,6 +6,8 @@ helm del --purge uk
 helm upgrade --install --force --namespace uk uk uk-charts-0.1.1.tgz -f values-local.yaml
 helm install --namespace uk --name uk uk-charts-0.1.1.tgz -f values-local.yaml
 
+helm install --namespace igrey --name ms ms-charts-0.1.1.tgz -f values-local.yaml
+
 kubectl port-forward dict-agents-ppz-postgreagentsppz-5fcbf9fdc7-42b8k 5432:5432
 kubectl create -f kubia-manual.yaml
 
