@@ -1,0 +1,76 @@
+# Default values for dcloud platform.
+# Управление зависимостями платформы
+
+## Нужное отметить как true не нужное как false
+tags:
+  metrics: false
+  monitoring: false
+  rabbitmq: true
+  admin: false
+  auth: false
+  discovery: true
+  config: true
+  turbine: false
+  zipkin: false
+  gateway: true
+
+
+global:
+  profiles:
+  #Если для config поставить профиль dev, отключается Spring Cloud Bus.
+  #Если нужен Spring Cloud Bus, то можно просто удалить этот параметр
+    config: dev
+  minikube:
+    enabled: true
+  repository: registry.gitlab.bcs.ru/devops/images/docker
+  #imageTag: latest -- тэг образов
+  imageTag: master
+  #Здесь нужно указать свой кроси если нужно. Есди проки не нужен, то оставить  proxy: {}
+#  proxy:
+#    http:
+#      host: s-msk-proxy-01.global.bcs
+#      port: 8080
+#    https:
+#      host: s-msk-proxy-01.global.bcs
+#      port: 8080
+#    none:
+#      - localhost
+#      - .svc.cluster.local
+  ingress:
+    http_protocol: http
+    suffix: nip.io
+    balancers: []
+  platform:
+    repository: registry.gitlab.bcs.ru/platform
+    configService: http://config-platform-service:8888
+    discoveryService: http://discovery-service.platform.svc.cluster.local:8761
+    #imageTag: latest -- тэг образов
+    imageTag: master
+  demo:
+    repository: registry.gitlab.bcs.ru/demo
+    #imageTag: latest -- тэг образов
+    imageTag: master
+  dns:
+    internal: 10.30.0.10
+  rabbitmq:
+    persistentVolume: 1Gi
+  grafana:
+    persistentVolume: 1Gi
+  prometheus:
+    alertmanagerVolume: 1Gi
+    serverVolume: 2Gi
+  storage:
+    class: "standard"
+    replicate: 0
+    nodes: []
+  keycloak:
+    internalIngressHost: auth.192.168.99.100.nip.io
+  gateway:
+    internalIngressHost: gateway.192.168.99.100.nip.io
+
+elasticsearch:
+  master:
+    # Master replica count should be (#clients / 2) + 1, and generally at least 3.
+    replicas: 1
+    env:
+      NUMBER_OF_MASTERS: "1"
