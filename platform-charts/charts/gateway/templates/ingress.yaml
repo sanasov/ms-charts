@@ -1,0 +1,33 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ template "fullname" . }}
+  labels:
+    app: {{ template "fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+  annotations:
+    kubernetes.io/tls-acme: "false"
+    kubernetes.io/ingress.class: "nginx"
+    ingress.kubernetes.io/proxy-body-size: 1G
+spec:
+  rules:
+  - host: gateway.{{ .Values.global.ingress.suffix }}
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: gateway-service
+          servicePort: 8080
+{{- if .Values.global.gateway }}
+{{- if .Values.global.gateway.internalIngressHost }}
+  - host: {{ .Values.global.gateway.internalIngressHost }}
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: gateway-service
+          servicePort: 8080
+{{- end }}
+{{- end }}

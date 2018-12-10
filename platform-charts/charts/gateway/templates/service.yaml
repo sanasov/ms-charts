@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-service
+  labels:
+    app: {{ template "name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  ports:
+    - name: gateway-service
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: {{ template "name" . }}
+    release: {{ .Release.Name }}

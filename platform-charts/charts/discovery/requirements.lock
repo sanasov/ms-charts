@@ -1,0 +1,6 @@
+dependencies:
+- name: utils
+  repository: http://localhost:8879
+  version: 0.1.1
+digest: sha256:325bbfbabd6763afc985b2ed0ec507123b16d7cc1c5e9c4a12e34a0a04394c25
+generated: 2018-11-07T18:34:37.737575086+03:00

@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ template "fullname" . }}
+  labels:
+    app: {{ template "fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+  annotations:
+    kubernetes.io/tls-acme: "false"
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+  - host: discovery.{{ .Values.global.ingress.suffix }}
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: discovery-service
+          servicePort: 8761

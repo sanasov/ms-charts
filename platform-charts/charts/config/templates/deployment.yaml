@@ -1,0 +1,66 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "fullname" . }}
+  labels:
+    app: {{ template "name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ template "name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      tolerations:
+{{ toYaml .Values.global.tolerations | indent 8 }}
+      initContainers:
+        - name: {{ .Chart.Name }}-wait-for-discovery
+          image: "{{ .Values.global.repository }}/curl:{{ .Values.global.imageTag }}"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              url="{{ .Values.global.platform.discoveryService | default .Values.discoveryService }}"
+              echo "Waiting for $url to be available... "
+              until curl -s -o/dev/null "$url"; do
+                  echo .
+                  sleep 1
+              done
+              echo "Success"
+      containers:
+        - name: {{ .Chart.Name }}
+          env:
+{{ include "proxyenv" . | indent 12 }}
+            - name: JAVA_EXT
+              value: -Djava.security.egd=file:/dev/./urandom -Dspring.profiles.active={{ .Values.global.profiles.config | default "default"}}
+            - name: JAVA_MEM
+              value: -Xms250m -Xmx512m -XX:CompressedClassSpaceSize=300m -XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=10 -XX:-TieredCompilation -Xss256k -XX:+UseG1GC -XX:+UseStringDeduplication
+          image:  "{{ .Values.global.platform.repository }}/config:{{ .Values.global.platform.imageTag }}"
+          imagePullPolicy: {{ .Values.global.platform.imagePullPolicy | default "Always" }}
+          resources:
+           requests:
+            memory: "512Mi"
+            cpu: "250m"
+           limits:
+            memory: "1Gi"
+            cpu: "500m"
+          ports:
+            - containerPort: 8888
+          command:
+            - /bin/sh
+            - -c
+            - java $JAVA_MEM $JAVA_EXT -jar /app.jar
+          readinessProbe:
+            tcpSocket:
+              port: 8888
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 8888
+            initialDelaySeconds: 600
+            periodSeconds: 60

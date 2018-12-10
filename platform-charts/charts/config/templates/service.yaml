@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: config-platform-service
+  labels:
+    app: {{ template "name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  ports:
+    - name: config-platform-service
+      port: 8888
+      targetPort: 8888
+  selector:
+    app: {{ template "name" . }}
+    release: {{ .Release.Name }}
